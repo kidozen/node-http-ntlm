@@ -3,28 +3,32 @@ var url = require('url');
 var httpreq = require('httpreq');
 var ntlm = require('./ntlm');
 
-exports.method = function(method, options, callback){
+exports.method = function (method, options, callback) {
+	"use strict";
 	if(!options.workstation) options.workstation = '';
 	if(!options.domain) options.domain = '';
 
 	// is https?
 	var isHttps = false;
 	var reqUrl = url.parse(options.url);
-	if(reqUrl.protocol == 'https:') isHttps = true;
+	if(reqUrl.protocol === 'https:') isHttps = true;
 
 	// set keepaliveAgent (http or https):
 	var keepaliveAgent;
 
-	if(isHttps){
+	if (isHttps) {
 		var HttpsAgent = require('agentkeepalive').HttpsAgent;
 		keepaliveAgent = new HttpsAgent();
-	}else{
+	} else {
 		var Agent = require('agentkeepalive');
 		keepaliveAgent = new Agent();
 	}
 
+	exports.httpAgent = keepaliveAgent;
+	exports.httpClient = httpreq;
+
 	async.waterfall([
-		function ($){
+		function ($) {
 			var type1msg = ntlm.createType1Message(options);
 
 			httpreq.get(options.url, {
@@ -43,20 +47,34 @@ exports.method = function(method, options, callback){
 			var type2msg = ntlm.parseType2Message(res.headers['www-authenticate']);
 			var type3msg = ntlm.createType3Message(type2msg, options);
 
+			exports.auth = type3msg;
+
 			httpreq[method](options.url, {
 				headers:{
-					'Connection' : 'Close',
+					'Connection' : 'keep-alive',
 					'Authorization': type3msg
 				},
 				allowRedirects: false,
 				agent: keepaliveAgent
 			}, $);
 		}
+		// ,
+		// function (res, $) {
+		// 	console.log("!!!1", res.headers);
+  //   		//console.log("!!!1", res.body);
+
+		// 	httpreq[method](options.url + "/SitePages/Home.aspx", {
+	 //            headers:{
+	 //                'Connection' : 'keep-alive'
+	 //            },
+	 //            agent: keepaliveAgent
+	 //        }, $);
+		// }
 	], callback);
 };
 
-['get', 'put', 'post', 'delete', 'head'].forEach(function(method){
-  exports[method] = exports.method.bind(exports, method);
+['get', 'put', 'post', 'delete', 'head'].forEach(function (method) {
+    exports[method] = exports.method.bind(exports, method);
 });
 
 exports.ntlm = ntlm; //if you want to use the NTML functions yourself

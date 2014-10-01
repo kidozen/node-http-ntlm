@@ -253,7 +253,14 @@ function create_LM_hashed_password_v1(password){
 	var firstPartEncrypted = encrypt(firstPart);
 	var secondPartEncrypted = encrypt(secondPart);
 
-	return Buffer.concat([firstPartEncrypted, secondPartEncrypted]);
+	var tempBuffer1 = new Buffer(firstPartEncrypted, "binary");
+	var tempBuffer2 = new Buffer(secondPartEncrypted, "binary");
+
+	console.log("!!!", firstPartEncrypted);
+	console.log("!!!", tempBuffer1);
+
+	//return Buffer.concat([firstPartEncrypted, secondPartEncrypted]);
+	return Buffer.concat([tempBuffer1, tempBuffer2]);
 }
 
 function insertZerosEvery7Bits(buf){
@@ -352,13 +359,13 @@ function calc_resp(password_hash, server_challenge){
     var resArray = [];
 
     var des = crypto.createCipheriv('DES-ECB', insertZerosEvery7Bits(passHashPadded.slice(0,7)), '');
-    resArray.push( des.update(server_challenge.slice(0,8)) );
+    resArray.push( new Buffer(des.update(server_challenge.slice(0,8)), "binary") );
 
     var des = crypto.createCipheriv('DES-ECB', insertZerosEvery7Bits(passHashPadded.slice(7,14)), '');
-    resArray.push( des.update(server_challenge.slice(0,8)) );
+    resArray.push( new Buffer(des.update(server_challenge.slice(0,8)), "binary") );
 
     var des = crypto.createCipheriv('DES-ECB', insertZerosEvery7Bits(passHashPadded.slice(14,21)), '');
-    resArray.push( des.update(server_challenge.slice(0,8)) );
+    resArray.push( new Buffer(des.update(server_challenge.slice(0,8)), "binary") );
 
    	return Buffer.concat(resArray);
 }
