@@ -256,9 +256,6 @@ function create_LM_hashed_password_v1(password){
 	var tempBuffer1 = new Buffer(firstPartEncrypted, "binary");
 	var tempBuffer2 = new Buffer(secondPartEncrypted, "binary");
 
-	console.log("!!!", firstPartEncrypted);
-	console.log("!!!", tempBuffer1);
-
 	//return Buffer.concat([firstPartEncrypted, secondPartEncrypted]);
 	return Buffer.concat([tempBuffer1, tempBuffer2]);
 }
